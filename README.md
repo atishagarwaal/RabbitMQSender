@@ -1,29 +1,64 @@
 # RabbitMQSender
 
-.NET Console Application using RabbitMQ for sending messages to a queue.
-
 ## Overview
 
-This is a small .NET console app that connects to a RabbitMQ broker and publishes messages to a configured exchange/queue. It serves as a simple producer example you can adapt for background services, integration tests, or as a reference implementation for publishing messages.
+RabbitMQSender is a .NET console application that demonstrates how to connect to a RabbitMQ broker and publish messages to an exchange/queue. It serves as a simple producer example for background services, integration tests, or as a reference implementation for message publishing.
 
-The example declares a direct exchange (`demo_exchange`), a queue (`demo_queue`), binds the queue with routing key `demo_routing_key`, and publishes demo messages.
+## Description
 
-## Prerequisites
+This application declares a direct exchange (`demo_exchange`), a queue (`demo_queue`), binds the queue with routing key `demo_routing_key`, and publishes 100 demo messages with a 100ms delay between each message.
 
-- .NET 8 SDK (net8.0) — install from https://dotnet.microsoft.com
-- A running RabbitMQ server (local or remote)
+**Key Features:**
+- Connects to RabbitMQ using configurable host, port, username, and password
+- Declares and manages exchanges and queues
+- Publishes messages in a loop with async/await pattern
+- Demonstrates proper resource management with `using` statements
 
-You can run a local RabbitMQ server with the management plugin using Docker:
+## Pre-requisites
+
+- **.NET 10 SDK** — install from https://dotnet.microsoft.com
+- **RabbitMQ Server** — local or remote instance
+
+### Quick Setup with WSL
+
+Run RabbitMQ in Windows Subsystem for Linux (WSL):
+
+1. **Enable mirrored networking mode** in `.wslconfig`:
+
+```ini
+[interop]
+networkingMode=mirrored
+```
+
+2. **Install and start RabbitMQ in WSL**:
+
+```bash
+# Install RabbitMQ and Erlang (if not already installed)
+sudo apt-get update
+sudo apt-get install rabbitmq-server
+
+# Start RabbitMQ service
+sudo service rabbitmq-server start
+
+# Enable the management plugin
+sudo rabbitmq-plugins enable rabbitmq_management
+```
+
+3. **Verify the connection**:
+
+Access the RabbitMQ management UI at http://localhost:15672 with default credentials (`guest`/`guest`).
+
+### Alternative: Quick Setup with Docker
+
+Alternatively, you can run RabbitMQ using Docker:
 
 ```bash
 docker run -d --hostname my-rabbit --name some-rabbit -p 5672:5672 -p 15672:15672 rabbitmq:3-management
 ```
 
-The RabbitMQ management UI will be available at http://localhost:15672 (default user/password: `guest`/`guest`).
+### Configuration
 
-## Configuration
-
-The example currently uses connection settings defined in `Program.cs` (see the code for exact values). Example hardcoded snippet:
+Connection settings are hardcoded in `Program.cs`. To use custom values, update:
 
 ```csharp
 var factory = new ConnectionFactory()
@@ -35,84 +70,44 @@ var factory = new ConnectionFactory()
 };
 ```
 
-For more flexible configuration, consider reading these values from environment variables or an `appsettings.json`.
+For environment-based configuration, you can set these variables:
+- `RABBITMQ_HOST` (default: `localhost`)
+- `RABBITMQ_PORT` (default: `5672`)
+- `RABBITMQ_USERNAME` (default: `guest`)
+- `RABBITMQ_PASSWORD` (default: `guest`)
+- `EXCHANGE_NAME` (default: `demo_exchange`)
+- `QUEUE_NAME` (default: `demo_queue`)
+- `ROUTING_KEY` (default: `demo_routing_key`)
 
-Suggested environment variables (if you change the code to read them):
+## Build and Run
 
-- RABBITMQ_HOST (default: `localhost`)
-- RABBITMQ_PORT (default: `5672`)
-- RABBITMQ_USERNAME (default: `guest`)
-- RABBITMQ_PASSWORD (default: `guest`)
-- EXCHANGE_NAME (e.g. `demo_exchange`)
-- QUEUE_NAME (e.g. `demo_queue`)
-- ROUTING_KEY (e.g. `demo_routing_key`)
-- MESSAGE (optional: message body to send)
-
-Example (Linux / macOS):
-
-```bash
-export RABBITMQ_HOST=localhost
-export RABBITMQ_PORT=5672
-export RABBITMQ_USERNAME=guest
-export RABBITMQ_PASSWORD=guest
-export QUEUE_NAME=demo_queue
-export EXCHANGE_NAME=demo_exchange
-export ROUTING_KEY=demo_routing_key
-export MESSAGE="Hello from RabbitMQSender"
-```
-
-Example (Windows PowerShell):
-
-```powershell
-$env:RABBITMQ_HOST = "localhost"
-$env:RABBITMQ_PORT = "5672"
-$env:RABBITMQ_USERNAME = "guest"
-$env:RABBITMQ_PASSWORD = "guest"
-$env:QUEUE_NAME = "demo_queue"
-$env:EXCHANGE_NAME = "demo_exchange"
-$env:ROUTING_KEY = "demo_routing_key"
-$env:MESSAGE = "Hello from RabbitMQSender"
-```
-
-## Build and run
-
-1. Restore and build the project:
+### 1. Restore and Build
 
 ```bash
 dotnet restore
 dotnet build
 ```
 
-2. Run the sender:
+### 2. Run the Application
 
 ```bash
 dotnet run --project RabbitMQSender.csproj
 ```
 
-You should see console output indicating messages were sent, for example:
+### 3. Expected Output
 
 ```
  [x] Sent Message 1
  [x] Sent Message 2
  ...
+ [x] Sent Message 100
+ Press [enter] to exit.
 ```
 
-Press Enter to exit after messages have been sent.
+The application will publish 100 messages to the RabbitMQ broker and wait for user input before exiting.
 
-## Usage examples
+### Notes
 
-- Send a batch of demo messages (the example publishes multiple messages with a short delay).
-- Provide a message body via environment variable or modify the code to accept command-line arguments (for example: `dotnet run -- "My message"`).
-- Integrate into scripts or CI to enqueue work for consumers.
-
-## How it works
-
-- The app creates a connection to RabbitMQ using the supplied host, port, and credentials.
-- It declares an exchange and a queue, binds the queue to the exchange with a routing key, and publishes messages to the exchange.
-- Messages are encoded (commonly as UTF-8 strings or JSON) and published using the default basic publish API.
-
-## Notes
-
-- The sample uses `RabbitMQ.Client` and targets .NET 8.
-- The example sets `durable: false` for queue/exchange by default — change these settings if you need persistence.
-- For production use, consider publisher confirms, retries, better error handling, logging, and dead-lettering.
+- The sample uses the `RabbitMQ.Client` NuGet package and targets .NET 8
+- Exchanges and queues are set to `durable: false` by default — change this if you need message persistence
+- For production use, consider implementing publisher confirms, retries, error handling, comprehensive logging, and dead-letter queues

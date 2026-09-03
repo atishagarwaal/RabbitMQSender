@@ -21,11 +21,11 @@ class Program
         using (var channel = connection.CreateModel())
         {
             // Declare an exchange
-            channel.ExchangeDeclare(exchange: "demo_exchange", type: ExchangeType.Direct);
+            channel.ExchangeDeclare(exchange: "demo_exchange", type: ExchangeType.Direct, durable: true);
 
             // Declare a queue
             channel.QueueDeclare(queue: "demo_queue",
-                                 durable: false,
+                                 durable: true,
                                  exclusive: false,
                                  autoDelete: false,
                                  arguments: null);
